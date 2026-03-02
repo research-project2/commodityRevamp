@@ -1,0 +1,253 @@
+import React, { useState, useContext } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
+import { AuthContext } from '../../context/SimpleAuthContext';
+
+const GREEN = '#1ABC9C';
+
+export default function SignInScreen({ navigation }) {
+  const { login } = useContext(AuthContext);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    const result = await login(email, password);
+    setLoading(false);
+
+    if (result.success) {
+      Alert.alert('Success', `Welcome, ${result.user.name}!`);
+      // Navigation will happen automatically via App.js condition
+    } else {
+      Alert.alert('Login Failed', result.error);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* back button */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.backButtonText}>←</Text>
+      </TouchableOpacity>
+
+      {/* title */}
+      <Text style={styles.title}>
+        <Text style={styles.titleBlack}>Sign </Text>
+        <Text style={styles.titleGreen}>In</Text>
+      </Text>
+
+      {/* subtitle */}
+      <Text style={styles.subtitle}>Welcome back! let's sign in to your account.</Text>
+
+      {/* email input */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your email here"
+          placeholderTextColor="#999"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        />
+      </View>
+
+      {/* password input */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Password</Text>
+        <View style={styles.passwordInputWrapper}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="••••••••"
+            placeholderTextColor="#999"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* remember & forgot password */}
+      <View style={styles.optionsRow}>
+        <TouchableOpacity
+          style={styles.rememberMeContainer}
+          onPress={() => setRememberMe(!rememberMe)}
+        >
+          <Text style={[styles.checkbox, { color: rememberMe ? GREEN : '#ccc' }]}>
+            {rememberMe ? '☑' : '☐'}
+          </Text>
+          <Text style={styles.rememberMeText}>Remember me</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+          <Text style={styles.forgotLink}>Forgot password?</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* sign in button */}
+      <TouchableOpacity
+        style={[styles.signInButton, loading && styles.buttonDisabled]}
+        onPress={handleSignIn}
+        disabled={loading}
+      >
+        <Text style={styles.signInButtonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
+      </TouchableOpacity>
+
+      {/* sign up link */}
+      <View style={styles.signUpContainer}>
+        <Text style={styles.signUpText}>Doesn't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+          <Text style={styles.signUpLink}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* spacer */}
+      <View style={styles.spacer} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#000',
+  },
+  title: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  titleBlack: {
+    color: '#000',
+  },
+  titleGreen: {
+    color: GREEN,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 32,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 8,
+  },
+  input: {
+    height: 48,
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+    fontSize: 14,
+    color: '#000',
+    paddingHorizontal: 0,
+  },
+  passwordInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+    height: 48,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#000',
+    paddingHorizontal: 0,
+  },
+  eyeIcon: {
+    fontSize: 18,
+    marginLeft: 8,
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    fontSize: 18,
+    marginRight: 6,
+  },
+  rememberMeText: {
+    fontSize: 13,
+    color: '#333',
+    marginLeft: 8,
+  },
+  forgotLink: {
+    fontSize: 13,
+    color: GREEN,
+    fontWeight: '500',
+  },
+  signInButton: {
+    height: 48,
+    backgroundColor: GREEN,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  signInButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  signUpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  signUpText: {
+    fontSize: 13,
+    color: '#666',
+  },
+  signUpLink: {
+    fontSize: 13,
+    color: GREEN,
+    fontWeight: '600',
+  },
+  spacer: {
+    flex: 1,
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 20,
+  },
+  footerText: {
+    fontSize: 13,
+    color: '#999',
+  },
+  contactUsLink: {
+    fontSize: 13,
+    color: GREEN,
+    fontWeight: '600',
+  },
+});
