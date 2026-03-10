@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { AuthContext } from '../../context/SimpleAuthContext';
-
+import { SVGEyeon, SVGEyeoff } from '../../assets/icons';
 const GREEN = '#1ABC9C';
 
 export default function SignInScreen({ navigation }) {
@@ -19,7 +19,6 @@ export default function SignInScreen({ navigation }) {
 
     if (result.success) {
       Alert.alert('Success', `Welcome, ${result.user.name}!`);
-      // Navigation will happen automatically via App.js condition
     } else {
       Alert.alert('Login Failed', result.error);
     }
@@ -66,26 +65,14 @@ export default function SignInScreen({ navigation }) {
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
+            {showPassword ? 
+              <SVGEyeon width={20} height={20} /> 
+              : 
+              <SVGEyeoff width={20} height={20} />
+            }
           </TouchableOpacity>
         </View>
-      </View>
-
-      {/* remember & forgot password */}
-      <View style={styles.optionsRow}>
-        <TouchableOpacity
-          style={styles.rememberMeContainer}
-          onPress={() => setRememberMe(!rememberMe)}
-        >
-          <Text style={[styles.checkbox, { color: rememberMe ? GREEN : '#ccc' }]}>
-            {rememberMe ? '☑' : '☐'}
-          </Text>
-          <Text style={styles.rememberMeText}>Remember me</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={styles.forgotLink}>Forgot password?</Text>
-        </TouchableOpacity>
       </View>
 
       {/* sign in button */}
@@ -174,9 +161,31 @@ const styles = StyleSheet.create({
     color: '#000',
     paddingHorizontal: 0,
   },
-  eyeIcon: {
-    fontSize: 18,
+  eyeIconContainer: {
+    padding: 8,
     marginLeft: 8,
+  },
+  eyeIcon: {
+    width: 20,
+    height: 20,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: GREEN,
+    borderColor: GREEN,
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   optionsRow: {
     flexDirection: 'row',

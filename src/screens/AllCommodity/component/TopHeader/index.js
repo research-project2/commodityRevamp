@@ -27,10 +27,10 @@ const TopHeader = ({ }) => {
     <View style={styles.topContainer}>
       <Pressable style={styles.backButton} onPress={handleBackPress}>
       
-        <Text style={styles.backText}>back</Text>
+        <Text style={styles.backText}>Back</Text>
       </Pressable>
 
-      <Text style={styles.title}>KOMODITAS</Text>
+      <Text style={styles.title}>REVAMP KOMODITAS</Text>
     </View>
 
   </View>

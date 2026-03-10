@@ -107,6 +107,9 @@ export const AuthProvider = ({ children }) => {
         displayName: displayName,
       });
 
+      // Logout segera setelah signup agar user harus sign in manual
+      await signOut(auth);
+
       const userData = {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
@@ -116,8 +119,6 @@ export const AuthProvider = ({ children }) => {
         signupTime: new Date(),
       };
 
-      setUser(userData);
-      setIsLoggedIn(true);
       setLoading(false);
 
       return { success: true, user: userData };

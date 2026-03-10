@@ -1,7 +1,7 @@
 const theme = {
   colors: {
     // Primary colors
-    accent: '#3B82F6', // Blue
+    accent: '#1ABC9C', // Blue
     primary: '#1F2937',
     
     // Background colors

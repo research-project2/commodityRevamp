@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   detailButton: {
-    backgroundColor: '#56A4EB',
+    backgroundColor: '#26e58c',
     borderBottomLeftRadius: 12,   
     borderBottomRightRadius: 12,  
     borderTopLeftRadius: 0,       

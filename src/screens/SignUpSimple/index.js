@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { AuthContext } from '../../context/SimpleAuthContext';
+import { SVGEyeon, SVGEyeoff } from '../../assets/icons';
 
 const GREEN = '#1ABC9C';
 
@@ -20,8 +21,13 @@ export default function SignUp({ navigation }) {
     setLoading(false);
 
     if (result.success) {
-      Alert.alert('Success', `Account created for ${result.user.name}!`);
-      // Navigation will happen automatically via App.js condition
+      Alert.alert('Success', `Account created for ${result.user.name}!`, [
+        {
+          text: 'Go to Sign In',
+            onPress: () => navigation.navigate('SignIn'),
+          },
+        
+    ]);
     } else {
       Alert.alert('Signup Failed', result.error);
     }
@@ -80,8 +86,12 @@ export default function SignUp({ navigation }) {
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
+            {showPassword ? 
+              <SVGEyeon width={20} height={20} /> 
+              : 
+              <SVGEyeoff width={20} height={20} />
+            }
           </TouchableOpacity>
         </View>
       </View>
@@ -98,8 +108,12 @@ export default function SignUp({ navigation }) {
             onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirmPassword}
           />
-          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-            <Text style={styles.eyeIcon}>{showConfirmPassword ? '👁' : '👁‍🗨'}</Text>
+          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeIconContainer}>
+            {showConfirmPassword ? 
+              <SVGEyeon width={20} height={20} /> 
+              : 
+              <SVGEyeoff width={20} height={20} />
+            }
           </TouchableOpacity>
         </View>
       </View>
@@ -191,8 +205,8 @@ const styles = StyleSheet.create({
     color: '#000',
     paddingHorizontal: 0,
   },
-  eyeIcon: {
-    fontSize: 18,
+  eyeIconContainer: {
+    padding: 8,
     marginLeft: 8,
   },
   signUpButton: {

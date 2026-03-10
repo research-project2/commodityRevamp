@@ -33,7 +33,6 @@ import IMGCengkeh1 from './img-cengkeh-1.png';
 import IMGNilam from './img-Nilam.png';
 import IMGKopra from './img-Kopra.png';
 import IMGPPala from './img-Pala.png';
-
 export {
   IMGDisclaimer,
   IMGAI,
