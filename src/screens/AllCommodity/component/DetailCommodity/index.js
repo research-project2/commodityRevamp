@@ -124,9 +124,9 @@ const calculateTrend = (current, old) => {
 
 /** @type {{[key: string]: string}} */
 const trendColors = {
-  up: '#4CCB63',
-  down: '#EA4335',
-  stay: '#5f6368',
+  up: '#EA4335',   // Merah - harga naik (buruk untuk user)
+  down: '#34A853', // Hijau - harga turun (baik untuk user)
+  stay: '#5f6368', // Abu-abu - harga tetap
 };
 
 /** @typedef {import('../../../../routes').RoutesParam} RoutesParam */

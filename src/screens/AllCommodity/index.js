@@ -80,8 +80,8 @@ const calculateTrend = (current, old) => {
 
 // Definisikan warna untuk tren di satu tempat agar mudah diubah
 const trendColors = {
-  up: '#34A853',   // Hijau
-  down: '#EA4335', // Merah
+  up: '#EA4335',   // Merah (harga naik = buruk untuk user)
+  down: '#34A853', // Hijau (harga turun = baik untuk user)
   stay: '#5f6368', // Abu-abu
 };
 
@@ -228,7 +228,7 @@ const AllCommodity = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <TopHeader
-        title="MP KOMODITAS"
+        title="REVAMP KOMODITAS"
         onBack={() => navigation.goBack()}
         showSearch={false}
         showSetting={false}

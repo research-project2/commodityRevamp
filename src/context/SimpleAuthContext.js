@@ -1,6 +1,7 @@
 import React, { createContext, useState, useCallback } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
-import { auth } from '../firebase/index';
+import { ref, set } from 'firebase/database';
+import { auth, database } from '../firebase/index';
 
 export const AuthContext = createContext({
   isLoggedIn: false,
@@ -107,17 +108,21 @@ export const AuthProvider = ({ children }) => {
         displayName: displayName,
       });
 
-      // Logout segera setelah signup agar user harus sign in manual
-      await signOut(auth);
-
       const userData = {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         name: displayName,
         displayName: displayName,
         photoURL: firebaseUser.photoURL,
-        signupTime: new Date(),
+        signupTime: new Date().toISOString(),
       };
+
+      // Simpan data user ke Firebase Realtime Database di node "users"
+      await set(ref(database, `users/${firebaseUser.uid}`), userData);
+      console.log('User data saved to database:', firebaseUser.uid);
+
+      // Logout segera setelah signup agar user harus sign in manual
+      await signOut(auth);
 
       setLoading(false);
 
