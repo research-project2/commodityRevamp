@@ -11,8 +11,14 @@ export default function SignInScreen({ navigation }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const handleSignIn = async () => {
+    // Clear previous errors
+    setEmailError('');
+    setPasswordError('');
+
     setLoading(true);
     const result = await login(email, password);
     setLoading(false);
@@ -20,8 +26,30 @@ export default function SignInScreen({ navigation }) {
     if (result.success) {
       Alert.alert('Success', `Welcome, ${result.user.name}!`);
     } else {
-      Alert.alert('Login Failed', result.error);
+      // Parse error and set specific error messages
+      const errorMessage = result.error.toLowerCase();
+      
+      if (errorMessage.includes('email') || errorMessage.includes('tidak terdaftar')) {
+        setEmailError('Email tidak sesuai');
+      } else if (errorMessage.includes('password') || errorMessage.includes('salah')) {
+        setPasswordError('Password tidak sesuai');
+      } else {
+        // For other errors, show in alert
+        Alert.alert('Login Gagal', result.error);
+      }
     }
+  };
+
+  // Clear email error when user types
+  const handleEmailChange = (text) => {
+    setEmail(text);
+    if (emailError) setEmailError('');
+  };
+
+  // Clear password error when user types
+  const handlePasswordChange = (text) => {
+    setPassword(text);
+    if (passwordError) setPasswordError('');
   };
 
   return (
@@ -44,25 +72,26 @@ export default function SignInScreen({ navigation }) {
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Email</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, emailError && styles.inputError]}
           placeholder="Enter your email here"
           placeholderTextColor="#999"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={handleEmailChange}
           keyboardType="email-address"
         />
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
       </View>
 
       {/* password input */}
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Password</Text>
-        <View style={styles.passwordInputWrapper}>
+        <View style={[styles.passwordInputWrapper, passwordError && styles.passwordInputError]}>
           <TextInput
             style={styles.passwordInput}
             placeholder="••••••••"
             placeholderTextColor="#999"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={handlePasswordChange}
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
@@ -73,6 +102,7 @@ export default function SignInScreen({ navigation }) {
             }
           </TouchableOpacity>
         </View>
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
       </View>
 
       {/* sign in button */}
@@ -148,12 +178,18 @@ const styles = StyleSheet.create({
     color: '#000',
     paddingHorizontal: 0,
   },
+  inputError: {
+    borderColor: '#E74C3C',
+  },
   passwordInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderColor: '#ddd',
     height: 48,
+  },
+  passwordInputError: {
+    borderColor: '#E74C3C',
   },
   passwordInput: {
     flex: 1,
@@ -164,6 +200,13 @@ const styles = StyleSheet.create({
   eyeIconContainer: {
     padding: 8,
     marginLeft: 8,
+  },
+  errorText: {
+    color: '#E74C3C',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 6,
+    marginLeft: 4,
   },
   eyeIcon: {
     width: 20,
