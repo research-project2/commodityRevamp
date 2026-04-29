@@ -54,11 +54,6 @@ export default function SignInScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* back button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>←</Text>
-      </TouchableOpacity>
-
       {/* title */}
       <Text style={styles.title}>
         <Text style={styles.titleBlack}>Sign </Text>

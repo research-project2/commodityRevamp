@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../../firebase/index';
-import { IMGCengkeh1, IMGNilam, IMGKopra, IMGPPala, IMGBeras } from '../../assets/images';
+import { IMGCabai,IMGMinyakGoreng,IMGTelur,IMGDgayam, IMGBeras } from '../../assets/images';
 import { AuthContext } from '../../context/SimpleAuthContext';
 
 const GREEN = '#1ABC9C';
@@ -24,11 +24,11 @@ const Home = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
 
   const commodityImages = {
-    kopra: IMGKopra,
-    pala: IMGPPala,
-    cengkeh: IMGCengkeh1,
-    nilam: IMGNilam,
+    minyak: IMGMinyakGoreng,
     beras: IMGBeras,
+    dagingayam: IMGDgayam,
+    cabai: IMGCabai,
+    telur: IMGTelur,
   };
 
   const formatPrice = (price) => {
@@ -62,7 +62,7 @@ const Home = ({ navigation }) => {
           return;
         }
 
-        const itemsToShow = ['kopra', 'pala', 'cengkeh', 'nilam', 'beras'];
+        const itemsToShow = ['minyak', 'dagingayam', 'telur', 'cabai', 'beras'];
         const processedCommodities = [];
 
         itemsToShow.forEach((itemName, index) => {

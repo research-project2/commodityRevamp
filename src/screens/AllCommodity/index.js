@@ -21,7 +21,7 @@ import {
 } from '../../assets/images';
 const commoditiesData = [
   { id: '1', name: 'Tomat', image: IMGTomat, category: 'Bumbu' },
-  { id: '2', name: 'Bawang Putih.', image: IMGBawangPutih, category: 'Bumbu' },
+  { id: '2', name: 'Bawang Putih', image: IMGBawangPutih, category: 'Bumbu' },
   { id: '3', name: 'Cabai', image: IMGCabai, category: 'Bumbu' },
   { id: '4', name: 'Daging Ayam', image: IMGDgayam, category: 'Daging' },
   { id: '5', name: 'Daging Babi', image: IMGDgbabi, category: 'Daging' },

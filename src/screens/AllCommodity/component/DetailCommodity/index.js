@@ -12,7 +12,7 @@ import {
   IMGBGtomat, IMGBGbawangmerahputih, IMGBGcabai, IMGBGayam, IMGBGbabi,
   IMGBGnilam, IMGBGkopra, IMGBGpala, IMGBackroundCengkeh, IMGBGberas,
   IMGBGsapi, IMGBGminyak, IMGBGtelur, IMGBGgula,
-  IMGUPtren1, IMGdowntren1, IMGAI, IMGDisclaimer
+  IMGAI, IMGDisclaimer
 } from '../../../../assets/images';
 import PriceLineChart from '../PriceLineChart';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -313,13 +313,6 @@ const CommodityDetail = ({ navigation, route }) => {
 
       <View style={styles.priceRow}>
         <Text style={styles.priceLabel}>Harga Saat ini</Text>
-
-        {trend === 'up' && (
-          <Image source={IMGUPtren1} style={styles.trendIcon} />
-        )}
-        {trend === 'down' && (
-          <Image source={IMGdowntren1} style={styles.trendIcon} />
-        )}
 
         <View style={[styles.trendBox, { backgroundColor: trendColors[trend] }]}>
           <Text style={styles.trendText}>{change}</Text>
