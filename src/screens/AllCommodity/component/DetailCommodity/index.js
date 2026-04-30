@@ -379,7 +379,7 @@ const CommodityDetail = ({ navigation, route }) => {
         </View>
       </Modal>
     </ScrollView>
-    <Footer onPress={() => navigation.navigate('HomeTab')} />
+    <Footer onPress={() => navigation.navigate('Home')} />
   </View>
 };
 
