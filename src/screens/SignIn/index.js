@@ -1,10 +1,11 @@
-import React, { useState, useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
+import React, { useState, useContext, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Modal } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { AuthContext } from '../../context/SimpleAuthContext';
 import { SVGEyeon, SVGEyeoff } from '../../assets/icons';
 const GREEN = '#1ABC9C';
 
-export default function SignInScreen({ navigation }) {
+export default function SignInScreen({ navigation, route }) {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,29 +14,173 @@ export default function SignInScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showEmailNotFoundModal, setShowEmailNotFoundModal] = useState(false);
+  const [showPasswordWrongModal, setShowPasswordWrongModal] = useState(false);
+  const [showPasswordEmptyModal, setShowPasswordEmptyModal] = useState(false);
+  const [showEmailEmptyModal, setShowEmailEmptyModal] = useState(false);
+  const [showBothEmptyModal, setShowBothEmptyModal] = useState(false);
+  const [showCredentialsWrongModal, setShowCredentialsWrongModal] = useState(false);
+
+  // Tampilkan modal ketika berhasil membuat akun
+  useEffect(() => {
+    if (route?.params?.signupSuccess === true) {
+      setShowSuccessModal(true);
+      // Clear params
+      navigation.setParams({ signupSuccess: false });
+      
+      // Auto-close modal setelah 3 detik
+      const timer = setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [route?.params?.signupSuccess, navigation]);
+
+  // Auto-close email not found modal setelah 3 detik
+  useEffect(() => {
+    if (showEmailNotFoundModal) {
+      const timer = setTimeout(() => {
+        setShowEmailNotFoundModal(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showEmailNotFoundModal]);
+
+  // Auto-close password wrong modal setelah 3 detik
+  useEffect(() => {
+    if (showPasswordWrongModal) {
+      const timer = setTimeout(() => {
+        setShowPasswordWrongModal(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showPasswordWrongModal]);
+
+  // Auto-close password empty modal setelah 3 detik
+  useEffect(() => {
+    if (showPasswordEmptyModal) {
+      const timer = setTimeout(() => {
+        setShowPasswordEmptyModal(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showPasswordEmptyModal]);
+
+  // Auto-close email empty modal setelah 3 detik
+  useEffect(() => {
+    if (showEmailEmptyModal) {
+      const timer = setTimeout(() => {
+        setShowEmailEmptyModal(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showEmailEmptyModal]);
+
+  // Auto-close both empty modal setelah 3 detik
+  useEffect(() => {
+    if (showBothEmptyModal) {
+      const timer = setTimeout(() => {
+        setShowBothEmptyModal(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showBothEmptyModal]);
+
+  // Auto-close credentials wrong modal setelah 3 detik
+  useEffect(() => {
+    if (showCredentialsWrongModal) {
+      const timer = setTimeout(() => {
+        setShowCredentialsWrongModal(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showCredentialsWrongModal]);
 
   const handleSignIn = async () => {
     // Clear previous errors
     setEmailError('');
     setPasswordError('');
 
+    // Validation: Check if email or password is empty
+    const emailTrimmed = email.trim();
+    const passwordTrimmed = password.trim();
+
+    if (!emailTrimmed && !passwordTrimmed) {
+      setShowBothEmptyModal(true);
+      return;
+    }
+
+    if (!emailTrimmed) {
+      setEmailError('Email harus diisi');
+      setShowEmailEmptyModal(true);
+      return;
+    }
+
+    if (!passwordTrimmed) {
+      setPasswordError('Password harus diisi');
+      setShowPasswordEmptyModal(true);
+      return;
+    }
+
     setLoading(true);
     const result = await login(email, password);
     setLoading(false);
 
     if (result.success) {
-      Alert.alert('Success', `Welcome, ${result.user.name}!`);
+      Toast.show({
+        type: 'success',
+        text1: 'Login Berhasil',
+        text2: `Selamat datang kembali, ${result.user.name}!`,
+        duration: 3000,
+      });
+      // Navigation akan otomatis ke Home karena isLoggedIn berubah menjadi true
     } else {
       // Parse error and set specific error messages
-      const errorMessage = result.error.toLowerCase();
+      const errorMessage = result.error ? result.error.toLowerCase() : '';
       
-      if (errorMessage.includes('email') || errorMessage.includes('tidak terdaftar')) {
+      console.log('Login Error:', result.error); // Debug log
+      
+      // Check for email not found/not registered errors
+      if (
+        errorMessage.includes('email') || 
+        errorMessage.includes('tidak terdaftar') ||
+        errorMessage.includes('user-not-found') ||
+        errorMessage.includes('user not found')
+      ) {
         setEmailError('Email tidak sesuai');
-      } else if (errorMessage.includes('password') || errorMessage.includes('salah')) {
+        setShowEmailNotFoundModal(true);
+      } 
+      // Check for password wrong/incorrect errors
+      else if (
+        errorMessage.includes('password') || 
+        errorMessage.includes('salah') ||
+        errorMessage.includes('wrong-password') ||
+        errorMessage.includes('wrong password') ||
+        errorMessage.includes('incorrect')
+      ) {
         setPasswordError('Password tidak sesuai');
+        setShowPasswordWrongModal(true);
+      } 
+      // Fallback for other credential-related errors
+      else if (result.error) {
+        // Show credentials wrong modal for generic login failures
+        setShowCredentialsWrongModal(true);
       } else {
-        // For other errors, show in alert
-        Alert.alert('Login Gagal', result.error);
+        // Fallback: Show error toast if no error message
+        Toast.show({
+          type: 'error',
+          text1: 'Login Gagal',
+          text2: 'Terjadi kesalahan. Silakan coba lagi.',
+          duration: 3000,
+        });
       }
     }
   };
@@ -119,6 +264,183 @@ export default function SignInScreen({ navigation }) {
 
       {/* spacer */}
       <View style={styles.spacer} />
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>🎉</Text>
+            <Text style={styles.modalTitle}>Akun Berhasil Dibuat!</Text>
+            <Text style={styles.modalSubtitle}>
+              Silakan login dengan akun Anda untuk melanjutkan.
+            </Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Mengerti</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Email Not Found Modal */}
+      <Modal
+        visible={showEmailNotFoundModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEmailNotFoundModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>❌</Text>
+            <Text style={styles.modalTitle}>Email Tidak Ditemukan</Text>
+            <Text style={styles.modalSubtitle}>
+              Email belum terdaftar. Silakan buat akun terlebih dahulu.
+            </Text>
+            <TouchableOpacity 
+              style={[styles.modalButton, { marginBottom: 8 }]}
+              onPress={() => setShowEmailNotFoundModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Coba Lagi</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.modalButtonSecondary]}
+              onPress={() => {
+                setShowEmailNotFoundModal(false);
+                navigation.navigate('SignUp');
+              }}
+            >
+              <Text style={styles.modalButtonSecondaryText}>Buat Akun Baru</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Password Wrong Modal */}
+      <Modal
+        visible={showPasswordWrongModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowPasswordWrongModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>🔒</Text>
+            <Text style={styles.modalTitle}>Password Salah</Text>
+            <Text style={styles.modalSubtitle}>
+              Password yang Anda masukkan tidak sesuai. Silakan coba lagi.
+            </Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setShowPasswordWrongModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Mengerti</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Password Empty Modal */}
+      <Modal
+        visible={showPasswordEmptyModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowPasswordEmptyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>⚠️</Text>
+            <Text style={styles.modalTitle}>Password Harus Diisi</Text>
+            <Text style={styles.modalSubtitle}>
+              Email Anda terdaftar tetapi password masih kosong. Silakan masukkan password Anda.
+            </Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setShowPasswordEmptyModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Mengerti</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Email Empty Modal */}
+      <Modal
+        visible={showEmailEmptyModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEmailEmptyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>⚠️</Text>
+            <Text style={styles.modalTitle}>Email Harus Diisi</Text>
+            <Text style={styles.modalSubtitle}>
+              Silakan masukkan email Anda untuk melanjutkan login.
+            </Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setShowEmailEmptyModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Mengerti</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Both Empty Modal */}
+      <Modal
+        visible={showBothEmptyModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowBothEmptyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>⚠️</Text>
+            <Text style={styles.modalTitle}>Email dan Password Harus Diisi</Text>
+            <Text style={styles.modalSubtitle}>
+              Silakan masukkan email dan password Anda untuk melanjutkan login.
+            </Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setShowBothEmptyModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Mengerti</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Credentials Wrong Modal */}
+      <Modal
+        visible={showCredentialsWrongModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCredentialsWrongModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>❌</Text>
+            <Text style={styles.modalTitle}>Email atau Password Salah</Text>
+            <Text style={styles.modalSubtitle}>
+              Kombinasi email dan password yang Anda masukkan tidak sesuai. Silakan periksa kembali dan coba lagi.
+            </Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => setShowCredentialsWrongModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Coba Lagi</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -296,5 +618,65 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: GREEN,
     fontWeight: '600',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    alignItems: 'center',
+    width: '85%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalEmoji: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalButton: {
+    backgroundColor: GREEN,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 24,
+    width: '100%',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  modalButtonSecondary: {
+    backgroundColor: '#f0f0f0',
+  },
+  modalButtonSecondaryText: {
+    color: GREEN,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

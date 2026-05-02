@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { AuthContext } from '../../context/SimpleAuthContext';
 import { SVGEyeon, SVGEyeoff } from '../../assets/icons';
 
@@ -21,15 +22,41 @@ export default function SignUp({ navigation }) {
     setLoading(false);
 
     if (result.success) {
-      Alert.alert('Success', `Account created for ${result.user.name}!`, [
-        {
-          text: 'Go to Sign In',
-            onPress: () => navigation.navigate('SignIn'),
-          },
-        
-    ]);
+      Toast.show({
+        type: 'success',
+        text1: 'Akun Berhasil Dibuat 🎉',
+        text2: `Selamat ${result.user.name}, akun Anda sudah siap. Silakan login untuk melanjutkan.`,
+        duration: 3000,
+      });
+      // Navigate setelah toast selesai ditampilkan
+      setTimeout(() => {
+        navigation.navigate('SignIn');
+      }, 3500);
     } else {
-      Alert.alert('Signup Failed', result.error);
+      const errorMessage = result.error.toLowerCase();
+      let toastMessage = result.error;
+      let toastTitle = 'Pendaftaran Gagal';
+
+      if (errorMessage.includes('email') && errorMessage.includes('sudah')) {
+        toastTitle = 'Email Sudah Terdaftar';
+        toastMessage = 'Email ini sudah digunakan. Gunakan email lain atau login.';
+      } else if (errorMessage.includes('email') && errorMessage.includes('format')) {
+        toastTitle = 'Format Email Tidak Sesuai';
+        toastMessage = 'Masukkan email dengan format yang benar (contoh: user@example.com).';
+      } else if (errorMessage.includes('password') && errorMessage.includes('cocok')) {
+        toastTitle = 'Password Tidak Sesuai';
+        toastMessage = 'Konfirmasi password harus sama dengan password yang Anda masukkan.';
+      } else if (errorMessage.includes('password')) {
+        toastTitle = 'Password Tidak Sesuai';
+        toastMessage = 'Silakan periksa kembali password dan konfirmasi password Anda.';
+      }
+
+      Toast.show({
+        type: 'error',
+        text1: toastTitle,
+        text2: toastMessage,
+        duration: 3000,
+      });
     }
   };
 

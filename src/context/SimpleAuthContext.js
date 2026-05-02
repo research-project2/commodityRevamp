@@ -17,9 +17,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Helper function untuk validasi email
+  // Helper function untuk validasi email - harus valid domain seperti @gmail.com, @yahoo.com, dll
   const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Regex: user@domain.com (memastikan ada @ dan domain dengan minimal 1 karakter + . + 2+ karakter extension)
+    const emailRegex = /^[^\s@]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
   };
 

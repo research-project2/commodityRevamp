@@ -1,10 +1,74 @@
 import React, { useContext, useEffect, useState } from "react";
-import { StyleSheet, ActivityIndicator, View } from "react-native";
+import { StyleSheet, ActivityIndicator, View, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Toast from "react-native-toast-message";
 import { AuthProvider, AuthContext } from "./src/context/SimpleAuthContext";
 import { RootNavigator } from "./src/routes";
+
+const toastConfig = {
+  success: (props) => (
+    <View style={{ marginHorizontal: 10, marginTop: 50 }}>
+      <View style={{ 
+        backgroundColor: '#fff',
+        borderLeftWidth: 4,
+        borderLeftColor: "#22c55e",
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+      }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: '#1f2937' }}>✓ {props.text1}</Text>
+        {props.text2 && <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{props.text2}</Text>}
+      </View>
+    </View>
+  ),
+  error: (props) => (
+    <View style={{ marginHorizontal: 10, marginTop: 50 }}>
+      <View style={{ 
+        backgroundColor: '#fff',
+        borderLeftWidth: 4,
+        borderLeftColor: "#ef4444",
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+      }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: '#1f2937' }}>✕ {props.text1}</Text>
+        {props.text2 && <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{props.text2}</Text>}
+      </View>
+    </View>
+  ),
+  info: (props) => (
+    <View style={{ marginHorizontal: 10, marginTop: 50 }}>
+      <View style={{ 
+        backgroundColor: '#fff',
+        borderLeftWidth: 4,
+        borderLeftColor: "#3b82f6",
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+      }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: '#1f2937' }}>ℹ {props.text1}</Text>
+        {props.text2 && <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{props.text2}</Text>}
+      </View>
+    </View>
+  ),
+};
 
 const AppContent = () => {
   const { isLoggedIn, loading } = useContext(AuthContext);
@@ -33,6 +97,7 @@ const AppContent = () => {
           <RootNavigator isLoggedIn={isLoggedIn} />
         </NavigationContainer>
       </SafeAreaProvider>
+      <Toast config={toastConfig} position="top" topOffset={0} />
     </GestureHandlerRootView>
   );
 };
@@ -55,5 +120,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  toastContainer: {
+    marginHorizontal: 10,
+    marginTop: 50,
+  },
+  toastContent: {
+    backgroundColor: '#fff',
+    borderLeftWidth: 4,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  toastTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  toastMessage: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
   },
 });

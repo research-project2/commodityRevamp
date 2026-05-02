@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../../firebase/index';
@@ -22,6 +23,7 @@ const Home = ({ navigation }) => {
   const { user, logout } = useContext(AuthContext);
   const [commodities, setCommodities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const hasShownWelcome = useRef(false);
 
   const commodityImages = {
     minyak: IMGMinyakGoreng,
@@ -47,6 +49,19 @@ const Home = ({ navigation }) => {
     })}%`;
     return { trend: diff > 0 ? 'up' : (diff < 0 ? 'down' : 'stay'), change };
   };
+
+  // Show welcome toast when Home screen first loads
+  useEffect(() => {
+    if (!hasShownWelcome.current && user) {
+      hasShownWelcome.current = true;
+      Toast.show({
+        type: 'success',
+        text1: 'Login Berhasil! ',
+        text2: `Selamat datang, ${user.displayName || user.name || 'User'}!`,
+        duration: 3000,
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     setLoading(true);
@@ -107,8 +122,21 @@ const Home = ({ navigation }) => {
         text: 'Keluar',
         onPress: async () => {
           const result = await logout();
-          if (result.success) Alert.alert('Sukses', 'Anda telah keluar');
-          else Alert.alert('Error', result.error);
+          if (result.success) {
+            Toast.show({
+              type: 'success',
+              text1: 'Logout Berhasil',
+              text2: 'Anda telah keluar dari aplikasi. Sampai jumpa!',
+              duration: 2000,
+            });
+          } else {
+            Toast.show({
+              type: 'error',
+              text1: 'Logout Gagal',
+              text2: result.error,
+              duration: 2500,
+            });
+          }
         },
         style: 'destructive',
       },
