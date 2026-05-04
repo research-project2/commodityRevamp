@@ -170,7 +170,7 @@ const CommodityDetail = ({ navigation, route }) => {
           let priceArray = [];
           let dateArray = [];
 
-          // Format v2 telah diganti menjadi seperti ini : { "2025-10-25": 35000, "2025-10-26": 36000 }
+          // STRUKTUR: actual = { '2026-04-03': { harga: 46250, jam: "...", sumber: "..." }, ... }
           if (typeof actual === 'object' && Object.keys(actual).length > 0) {
             dateArray = Object.keys(actual);
 
@@ -178,7 +178,11 @@ const CommodityDetail = ({ navigation, route }) => {
             dateArray.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
             // ambil harga berdasarkan tanggal yang sudah diurutkan
-            priceArray = dateArray.map(d => actual[d]);
+            // handle kedua format: nested (dengan .harga) atau langsung number
+            priceArray = dateArray.map(d => {
+              const data = actual[d];
+              return typeof data === 'object' ? data?.harga : data;
+            }).filter(price => price !== null && price !== undefined);
           }
           let latestPredicted = null;
 
@@ -194,7 +198,9 @@ const CommodityDetail = ({ navigation, route }) => {
 
             // ambil harga dari tanggal paling baru
             const lastPredictedDate = predictedDates[predictedDates.length - 1];
-            latestPredicted = predictedDataNode[lastPredictedDate];
+            const predictedData = predictedDataNode[lastPredictedDate];
+            // STRUKTUR: predicted data bisa berupa number langsung atau object dengan harga property
+            latestPredicted = typeof predictedData === 'object' ? predictedData?.harga : predictedData;
             
             console.log('[DetailCommodity] Latest Predicted:', latestPredicted, 'Date:', lastPredictedDate);
           }
@@ -217,13 +223,17 @@ const CommodityDetail = ({ navigation, route }) => {
 
             const latestPrice = priceArray[lastIndex];
             const previousPrice =
-              priceArray.length > 1 ? priceArray[lastIndex - 1] : null;
+              priceArray.length > 1 ? priceArray[lastIndex - 1] : latestPrice;
 
-            const { trend, change } = calculateTrend(latestPrice, previousPrice);
-
-            setPrice(latestPrice);
-            setTrend(trend);
-            setChange(change);
+            // hanya hitung tren jika kedua harga valid
+            if (latestPrice !== null && latestPrice !== undefined && previousPrice !== null && previousPrice !== undefined) {
+              const { trend, change } = calculateTrend(latestPrice, previousPrice);
+              setPrice(latestPrice);
+              setTrend(trend);
+              setChange(change);
+            } else {
+              setPrice(latestPrice);
+            }
             setPredictedPrice(latestPredicted);
           } else {
             setPrice(null);
@@ -282,8 +292,8 @@ const CommodityDetail = ({ navigation, route }) => {
 
   // hitung perbandingan prediksi vs aktual untuk memilih warna
   let predictedComparison = /** @type {'up' | 'down' | 'stay' | null} */(null);
-  if (predictedPrice != null && price != null) {
-    if (predictedPrice < (price || 0)) predictedComparison = 'down';
+  if (predictedPrice != null && price != null && typeof predictedPrice === 'number' && typeof price === 'number') {
+    if (predictedPrice < price) predictedComparison = 'down';
     else if (predictedPrice > price) predictedComparison = 'up';
     else predictedComparison = 'stay';
   }
@@ -321,7 +331,7 @@ const CommodityDetail = ({ navigation, route }) => {
 
       <View style={styles.priceValueRow}>
         <Text style={styles.priceValue}>
-          {price !== null
+          {price !== null && price !== undefined && typeof price === 'number'
             ? `Rp ${price.toLocaleString('id-ID')}`
             : 'Memuat harga...'}
         </Text>
@@ -331,7 +341,7 @@ const CommodityDetail = ({ navigation, route }) => {
           {predictedPrice !== null ? (
             <Text style={[styles.predictedValue, { color: predictedColor }]}>{`Rp ${predictedPrice.toLocaleString('id-ID')}`}</Text>
           ) : (
-            <Text style={[styles.predictedValueNull, { color: '#888', fontSize: 20 }]}>Data Belum Tersedia</Text>
+            <Text style={[styles.predictedValueNull, { color: '#888', fontSize: 20 }]}>Belum Tersedia</Text>
           )}
         </View>
       </View>

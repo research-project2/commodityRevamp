@@ -84,7 +84,8 @@ const Home = ({ navigation }) => {
           const firebaseNode = data[itemName];
           if (firebaseNode && firebaseNode.actual && typeof firebaseNode.actual === 'object') {
             const sortedDates = Object.keys(firebaseNode.actual).sort();
-            const priceArray = sortedDates.map(date => firebaseNode.actual[date]);
+            // STRUKTUR: actual = { '2026-04-03': { harga: 46250, jam: "...", sumber: "..." }, ... }
+            const priceArray = sortedDates.map(date => firebaseNode.actual[date].harga);
 
             if (priceArray.length > 0) {
               const currentPrice = priceArray[priceArray.length - 1];

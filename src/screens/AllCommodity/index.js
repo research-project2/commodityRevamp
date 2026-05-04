@@ -110,10 +110,14 @@ const AllCommodity = ({ navigation }) => {
 
         let priceArray = [];
 
-        // STRUKTUR BARU: actual = { '2025-10-26': 35000, ... }
+        // STRUKTUR: actual = { '2026-04-03': { harga: 46250, jam: "...", sumber: "..." }, ... }
         if (actual && typeof actual === 'object' && !Array.isArray(actual)) {
           const sortedDates = Object.keys(actual).sort(); // sort ASC
-          priceArray = sortedDates.map(date => actual[date]);
+          // handle kedua format: nested (dengan .harga) atau langsung number
+          priceArray = sortedDates.map(date => {
+            const data = actual[date];
+            return typeof data === 'object' ? data?.harga : data;
+          }).filter(price => price !== null && price !== undefined);
         }
 
         if (priceArray.length > 0) {
