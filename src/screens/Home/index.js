@@ -14,7 +14,7 @@ import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ref, onValue } from 'firebase/database';
 import { database } from '../../firebase/index';
-import { IMGCabai,IMGMinyakGoreng,IMGTelur,IMGDgayam, IMGBeras } from '../../assets/images';
+import { IMGCabai,IMGMinyakGoreng,IMGTelur,IMGGula, IMGBeras } from '../../assets/images';
 import { AuthContext } from '../../context/SimpleAuthContext';
 
 const GREEN = '#1ABC9C';
@@ -28,7 +28,7 @@ const Home = ({ navigation }) => {
   const commodityImages = {
     minyak: IMGMinyakGoreng,
     beras: IMGBeras,
-    dagingayam: IMGDgayam,
+    gula: IMGGula,
     cabai: IMGCabai,
     telur: IMGTelur,
   };
@@ -77,7 +77,7 @@ const Home = ({ navigation }) => {
           return;
         }
 
-        const itemsToShow = ['minyak', 'dagingayam', 'telur', 'cabai', 'beras'];
+        const itemsToShow = ['minyak', 'gula', 'telur', 'cabai', 'beras'];
         const processedCommodities = [];
 
         itemsToShow.forEach((itemName, index) => {

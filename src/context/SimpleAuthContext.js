@@ -85,30 +85,39 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       // Validasi input
       if (!displayName || !email || !password || !confirmPassword) {
+        setLoading(false);
         throw new Error('Semua field harus diisi');
       }
 
       if (!validateEmail(email)) {
+        setLoading(false);
         throw new Error('Format email tidak valid');
       }
 
       if (password !== confirmPassword) {
+        setLoading(false);
         throw new Error('Password tidak cocok');
       }
 
       if (password.length < 6) {
+        setLoading(false);
         throw new Error('Password minimal 6 karakter');
       }
 
-      // Buat akun di Firebase
+      // Buat akun di Firebase Auth
+      console.log('Creating user account...');
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
+      console.log('User account created:', firebaseUser.uid);
 
       // Update profile dengan display name
+      console.log('Updating user profile...');
       await updateProfile(firebaseUser, {
         displayName: displayName,
       });
+      console.log('User profile updated');
 
+      // Siapkan data user
       const userData = {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
@@ -119,17 +128,23 @@ export const AuthProvider = ({ children }) => {
       };
 
       // Simpan data user ke Firebase Realtime Database di node "users"
+      console.log('Saving user data to database...');
       await set(ref(database, `users/${firebaseUser.uid}`), userData);
       console.log('User data saved to database:', firebaseUser.uid);
 
       // Logout segera setelah signup agar user harus sign in manual
+      console.log('Signing out user after signup...');
       await signOut(auth);
+      console.log('User signed out');
 
+      // Set loading false dan return success
       setLoading(false);
 
       return { success: true, user: userData };
     } catch (error) {
       setLoading(false);
+      console.error('Signup error:', error);
+      
       let errorMessage = 'Registrasi gagal';
       
       if (error.code === 'auth/email-already-in-use') {
@@ -139,7 +154,7 @@ export const AuthProvider = ({ children }) => {
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Password tidak cukup kuat';
       } else {
-        errorMessage = error.message;
+        errorMessage = error.message || 'Terjadi kesalahan saat mendaftar';
       }
 
       return { success: false, error: errorMessage };

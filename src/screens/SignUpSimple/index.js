@@ -18,43 +18,74 @@ export default function SignUp({ navigation }) {
 
   const handleSignUp = async () => {
     setLoading(true);
-    const result = await signup(displayName, email, password, confirmPassword);
-    setLoading(false);
+    
+    try {
+      console.log('Starting signup process...');
+      const result = await signup(displayName, email, password, confirmPassword);
+      setLoading(false);
 
-    if (result.success) {
-      Toast.show({
-        type: 'success',
-        text1: 'Akun Berhasil Dibuat 🎉',
-        text2: `Selamat ${result.user.name}, akun Anda sudah siap. Silakan login untuk melanjutkan.`,
-        duration: 3000,
-      });
-      // Navigate setelah toast selesai ditampilkan
-      setTimeout(() => {
-        navigation.navigate('SignIn');
-      }, 3500);
-    } else {
-      const errorMessage = result.error.toLowerCase();
-      let toastMessage = result.error;
-      let toastTitle = 'Pendaftaran Gagal';
+      console.log('Signup result:', result);
 
-      if (errorMessage.includes('email') && errorMessage.includes('sudah')) {
-        toastTitle = 'Email Sudah Terdaftar';
-        toastMessage = 'Email ini sudah digunakan. Gunakan email lain atau login.';
-      } else if (errorMessage.includes('email') && errorMessage.includes('format')) {
-        toastTitle = 'Format Email Tidak Sesuai';
-        toastMessage = 'Masukkan email dengan format yang benar (contoh: user@example.com).';
-      } else if (errorMessage.includes('password') && errorMessage.includes('cocok')) {
-        toastTitle = 'Password Tidak Sesuai';
-        toastMessage = 'Konfirmasi password harus sama dengan password yang Anda masukkan.';
-      } else if (errorMessage.includes('password')) {
-        toastTitle = 'Password Tidak Sesuai';
-        toastMessage = 'Silakan periksa kembali password dan konfirmasi password Anda.';
+      // Pastikan result ada dan check success
+      if (result && result.success === true) {
+        console.log('✓ Signup successful!');
+        console.log('User data:', result.user);
+        
+        // Tunggu sebentar untuk ensure UI render dengan benar
+        setTimeout(() => {
+          console.log('Showing success toast...');
+          Toast.show({
+            type: 'success',
+            text1: 'Akun Berhasil Dibuat 🎉',
+            text2: `Selamat ${result.user?.name || 'User'}, akun Anda sudah siap. Silakan login untuk melanjutkan.`,
+            duration: 4000,
+          });
+        }, 100);
+
+        // Navigate setelah toast selesai ditampilkan
+        setTimeout(() => {
+          console.log('Navigating to SignIn...');
+          navigation.navigate('SignIn');
+        }, 4500);
+      } else {
+        // Error handling
+        console.log('✗ Signup failed');
+        const errorMsg = result?.error || 'Terjadi kesalahan yang tidak diketahui';
+        console.log('Error message:', errorMsg);
+        
+        const errorMessage = errorMsg.toLowerCase();
+        let toastMessage = errorMsg;
+        let toastTitle = 'Pendaftaran Gagal';
+
+        if (errorMessage.includes('email') && errorMessage.includes('sudah')) {
+          toastTitle = 'Email Sudah Terdaftar';
+          toastMessage = 'Email ini sudah digunakan. Gunakan email lain atau login.';
+        } else if (errorMessage.includes('email') && errorMessage.includes('format')) {
+          toastTitle = 'Format Email Tidak Sesuai';
+          toastMessage = 'Masukkan email dengan format yang benar (contoh: user@example.com).';
+        } else if (errorMessage.includes('password') && errorMessage.includes('cocok')) {
+          toastTitle = 'Password Tidak Sesuai';
+          toastMessage = 'Konfirmasi password harus sama dengan password yang Anda masukkan.';
+        } else if (errorMessage.includes('password')) {
+          toastTitle = 'Password Tidak Valid';
+          toastMessage = 'Silakan periksa kembali password Anda.';
+        }
+
+        Toast.show({
+          type: 'error',
+          text1: toastTitle,
+          text2: toastMessage,
+          duration: 3000,
+        });
       }
-
+    } catch (error) {
+      setLoading(false);
+      console.error('Signup exception:', error);
+      
       Toast.show({
         type: 'error',
-        text1: toastTitle,
-        text2: toastMessage,
+        text1: 'Error Tidak Terduga',
+        text2: error?.message || 'Terjadi kesalahan saat mendaftar.',
         duration: 3000,
       });
     }
