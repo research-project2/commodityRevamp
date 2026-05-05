@@ -40,7 +40,30 @@ const commoditiesData = [
 const numColumns = 3;
 
 function getFirebaseKey(name) {
+  // Try multiple formats untuk match dengan Firebase structure
   return name.toLowerCase().replace(/[ .]/g, ''); 
+}
+
+// Helper function untuk coba berbagai format key
+function tryGetPriceData(livePrices, name) {
+  const variants = [
+    name.toLowerCase().replace(/[ .]/g, ''),           // bawangmerah
+    name.toLowerCase().replace(/ /g, '_'),             // bawang_merah
+    name.toLowerCase().replace(/ /g, '-'),             // bawang-merah
+    name.toLowerCase(),                                 // bawang merah (dengan spasi)
+  ];
+
+  console.log(`[Price Lookup] "${name}" trying variants:`, variants);
+
+  for (const variant of variants) {
+    if (livePrices[variant]) {
+      console.log(`[Price Found] "${name}" matched with key: "${variant}"`);
+      return livePrices[variant];
+    }
+  }
+
+  console.log(`[Price NOT Found] "${name}" - no price data available`);
+  return null;
 }
 
 const formatPrice = (price) => {
@@ -96,7 +119,12 @@ const AllCommodity = ({ navigation }) => {
     //get data realtime dari firebase
     const unsubscribe = onValue(dbRef, snap => {
       const data = snap.val();
-      console.log("[RealtimePrice/v2]", data);
+      console.log("========== [Firebase Data] ==========");
+      console.log("[RealtimePrice/v2] Full data:", data);
+      
+      if (data) {
+        console.log("[Firebase Keys Available]:", Object.keys(data));
+      }
 
       if (!data) {
         setLivePrices({});
@@ -125,11 +153,14 @@ const AllCommodity = ({ navigation }) => {
           const oldPrice = priceArray.length > 1 ? priceArray[priceArray.length - 2] : currentPrice;
 
           latestPrices[key] = { currentPrice, oldPrice };
+          console.log(`[${key}] current: ${currentPrice}, old: ${oldPrice}`);
         } else {
           latestPrices[key] = { currentPrice: null, oldPrice: null };
+          console.log(`[${key}] No price data found`);
         }
       });
 
+      console.log("========== [End Firebase Data] ==========");
       setLivePrices(latestPrices);
     });
 
@@ -144,10 +175,8 @@ const AllCommodity = ({ navigation }) => {
     
     // 1. Gabungkan data
     const allMergedData = commoditiesData.map(item => {
-      const key = getFirebaseKey(item.name);
-      
-      // Ambil seluruh node untuk komoditas ini (misal: 'tomat')
-      const liveDataNode = livePrices[key]; 
+      // Coba berbagai format key untuk match Firebase
+      const liveDataNode = tryGetPriceData(livePrices, item.name);
       
       // Ekstrak harga
       const current = liveDataNode?.currentPrice;
@@ -162,6 +191,13 @@ const AllCommodity = ({ navigation }) => {
         trend: trend,           // 'up', 'down', atau 'stay'
         change: change,         // 'X,X%'
       };
+    });
+
+    // Debug: Log semua item yang tidak punya harga
+    allMergedData.forEach(item => {
+      if (item.price === null) {
+        console.warn(`⚠️ No price data for: ${item.name}`);
+      }
     });
 
     // 2. Filter (logika tetap sama)

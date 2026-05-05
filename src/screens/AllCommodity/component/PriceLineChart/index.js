@@ -100,26 +100,49 @@ const PriceLineChart = ({ commodity, timeframe: timeframeProp }) => {
     
     setLoading(true);
     // Ambil data actual dari Firebase - HANYA DIPANGGIL SEKALI per commodity
-    const dbRef = ref(database, `realTimePrice/v2/${commodity}/actual`);
-    get(dbRef).then(snap => {
+    // Coba path v2 terlebih dahulu, jika tidak ada fallback ke path lama
+    const dbRefV2 = ref(database, `realTimePrice/v2/${commodity}/actual`);
+    get(dbRefV2).then(snap => {
       // Cek apakah component masih mounted sebelum setState
       if (!isMounted.current) return;
       
-      const val = snap.val() || {};
-      // Urutkan tanggal dari paling lama ke paling baru
-      let labels = Object.keys(val).sort((a, b) => {
-        // Sort format YYYY-MM-DD, fallback ke string compare jika gagal
-        const da = new Date(a);
-        const db = new Date(b);
-        if (!isNaN(da) && !isNaN(db)) return da - db;
-        return String(a).localeCompare(String(b));
-      });
-      let data = labels.map(k => Number(val[k]));
+      let val = snap.val();
       
+      // Jika data di v2 tidak ada, fallback ke path lama (tanpa v2)
+      if (!val) {
+        const dbRefOld = ref(database, `realTimePrice/${commodity}/actual`);
+        return get(dbRefOld).then(snapOld => {
+          if (!isMounted.current) return;
+          val = snapOld.val() || {};
+          processActualData(val);
+        }).catch(err => {
+          console.warn(`[PriceLineChart] Gagal ambil data dari kedua path untuk ${commodity}:`, err);
+          setLoading(false);
+        });
+      } else {
+        processActualData(val);
+      }
+      
+      function processActualData(data) {
+        // Urutkan tanggal dari paling lama ke paling baru
+        let labels = Object.keys(data).sort((a, b) => {
+          // Sort format YYYY-MM-DD, fallback ke string compare jika gagal
+          const da = new Date(a);
+          const db = new Date(b);
+          if (!isNaN(da) && !isNaN(db)) return da - db;
+          return String(a).localeCompare(String(b));
+        });
+        
+        // Handle kedua format: object dengan .harga atau direct number
+        let dataVals = labels.map(k => {
+          const item = data[k];
+          return typeof item === 'object' ? (item?.harga ?? Number(item)) : Number(item);
+        });
+        
       // HANDLING: Generate data actual yang hilang hingga hari ini
       if (labels.length > 0) {
         const lastActualLabel = labels[labels.length - 1];
-        const lastActualPrice = data[data.length - 1];
+        const lastActualPrice = dataVals[dataVals.length - 1];
         const lastDate = new Date(lastActualLabel);
         const today = new Date();
         
@@ -134,7 +157,7 @@ const PriceLineChart = ({ commodity, timeframe: timeframeProp }) => {
           while (currentDate <= today) {
             const dateStr = currentDate.toISOString().split('T')[0];
             labels.push(dateStr);
-            data.push(lastActualPrice); // Forward-fill dengan harga yang sama
+            dataVals.push(lastActualPrice); // Forward-fill dengan harga yang sama
             currentDate.setDate(currentDate.getDate() + 1);
           }
           
@@ -152,16 +175,20 @@ const PriceLineChart = ({ commodity, timeframe: timeframeProp }) => {
             totalPoints: labels.length,
             firstDate: labels[0],
             lastDate: labels[labels.length - 1],
-            lastPrice: data[data.length - 1],
+            lastPrice: dataVals[dataVals.length - 1],
             allDates: labels.slice(-5), // 5 tanggal terakhir
           });
         }
       }
       
       setAllLabels(labels);
-      setAllData(data);
+      setAllData(dataVals);
       //  OPTIMASI: Mark commodity sebagai sudah di-fetch
       fetchedCommodities.current.add(commodity);
+      setLoading(false);
+      }
+    }).catch(err => {
+      console.warn(`[PriceLineChart] Error fetching actual data for ${commodity}:`, err);
       setLoading(false);
     });
     // Dependency array hanya commodity - fetch hanya sekali per commodity
@@ -175,79 +202,97 @@ const PriceLineChart = ({ commodity, timeframe: timeframeProp }) => {
     }
     
     // Ambil data predicted dari Firebase - HANYA DIPANGGIL SEKALI per commodity
-    const predictedRef = ref(database, `realTimePrice/v2/${commodity}/predicted`);
-    get(predictedRef).then(snap => {
+    // Coba path v2 terlebih dahulu, jika tidak ada fallback ke path lama
+    const predictedRefV2 = ref(database, `realTimePrice/v2/${commodity}/predicted`);
+    get(predictedRefV2).then(snap => {
       // Cek apakah component masih mounted sebelum setState
       if (!isMounted.current) return;
       
-      // semua data di simpan di val
-      const val = snap.val();
+      let val = snap.val();
+      
+      // Jika data di v2 tidak ada, fallback ke path lama (tanpa v2)
       if (!val) {
-        // Tidak ada predicted, biarkan kosong
-        fetchedCommodities.current.add(`${commodity}_pred`);
-        return;
-      }
-      // Asumsi val = { tanggal1: harga1, tanggal2: harga2, ... }
-      let labels = Object.keys(val).sort((a, b) => {
-        const da = new Date(a);
-        const db = new Date(b);
-        if (!isNaN(da) && !isNaN(db)) return da - db;
-        return String(a).localeCompare(String(b));
-      });
-      let data = labels.map(k => Number(val[k]));
-      
-      // HANDLING: Generate predicted data hingga +1 hari dari hari ini
-      if (labels.length > 0) {
-        const lastPredictedLabel = labels[labels.length - 1];
-        const lastPredictedPrice = data[data.length - 1];
-        const lastDate = new Date(lastPredictedLabel);
-        const today = new Date();
-        
-        lastDate.setHours(0, 0, 0, 0);
-        today.setHours(0, 0, 0, 0);
-        
-        // Generate predicted data dari hari setelah terakhir hingga +1 hari dari hari ini
-        let tomorrowDate = new Date(today);
-        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-        
-        // Jika ada gap antara predicted terakhir dan besok, generate forward-fill
-        if (lastDate < tomorrowDate) {
-          let currentDate = new Date(lastDate);
-          currentDate.setDate(currentDate.getDate() + 1);
-          
-          while (currentDate <= tomorrowDate) {
-            const dateStr = currentDate.toISOString().split('T')[0];
-            labels.push(dateStr);
-            data.push(lastPredictedPrice); // Forward-fill dengan harga yang sama
-            currentDate.setDate(currentDate.getDate() + 1);
+        const predictedRefOld = ref(database, `realTimePrice/${commodity}/predicted`);
+        return get(predictedRefOld).then(snapOld => {
+          if (!isMounted.current) return;
+          val = snapOld.val();
+          if (val) processPredictedData(val);
+          else {
+            fetchedCommodities.current.add(`${commodity}_pred`);
           }
-          
-          console.log('📊 [PriceLineChart] Predicted Data Handling (Forward-Fill to +1 day):', {
-            commodity: commodity,
-            lastPredictedDateFromDB: lastPredictedLabel,
-            lastPredictedPrice: lastPredictedPrice,
-            today: today.toISOString().split('T')[0],
-            tomorrow: tomorrowDate.toISOString().split('T')[0],
-            generatedDates: labels.slice(-5),
-            totalPoints: labels.length,
-          });
-        } else {
-          console.log('📊 [PriceLineChart] Predicted Data Loaded:', {
-            commodity: commodity,
-            totalPoints: labels.length,
-            lastDate: labels[labels.length - 1],
-            lastPrice: data[data.length - 1],
-          });
-        }
+        }).catch(err => console.warn(`[PriceLineChart] Gagal ambil predicted dari kedua path untuk ${commodity}:`, err));
+      } else {
+        processPredictedData(val);
       }
       
-      // Set hanya data terakhir untuk ditampilkan
-      setPredictedLabels(labels.slice(-1)); //data terbaru (setelah forward-fill)
-      setPredictedData(data.slice(-1));
-      
-      // OPTIMASI: Mark predicted sebagai sudah di-fetch
-      fetchedCommodities.current.add(`${commodity}_pred`);
-    }).catch(err => console.warn('Gagal ambil data predicted:', err));
+      function processPredictedData(data) {
+        // semua data di simpan di data
+        let labels = Object.keys(data).sort((a, b) => {
+          const da = new Date(a);
+          const db = new Date(b);
+          if (!isNaN(da) && !isNaN(db)) return da - db;
+          return String(a).localeCompare(String(b));
+        });
+        
+        // Handle kedua format: object dengan .harga atau direct number
+        let dataVals = labels.map(k => {
+          const item = data[k];
+          return typeof item === 'object' ? (item?.harga ?? Number(item)) : Number(item);
+        });
+        
+        // HANDLING: Generate predicted data hingga +1 hari dari hari ini
+        if (labels.length > 0) {
+          const lastPredictedLabel = labels[labels.length - 1];
+          const lastPredictedPrice = dataVals[dataVals.length - 1];
+          const lastDate = new Date(lastPredictedLabel);
+          const today = new Date();
+          
+          lastDate.setHours(0, 0, 0, 0);
+          today.setHours(0, 0, 0, 0);
+          
+          // Generate predicted data dari hari setelah terakhir hingga +1 hari dari hari ini
+          let tomorrowDate = new Date(today);
+          tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+          
+          // Jika ada gap antara predicted terakhir dan besok, generate forward-fill
+          if (lastDate < tomorrowDate) {
+            let currentDate = new Date(lastDate);
+            currentDate.setDate(currentDate.getDate() + 1);
+            
+            while (currentDate <= tomorrowDate) {
+              const dateStr = currentDate.toISOString().split('T')[0];
+              labels.push(dateStr);
+              dataVals.push(lastPredictedPrice); // Forward-fill dengan harga yang sama
+              currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            console.log('📊 [PriceLineChart] Predicted Data Handling (Forward-Fill to +1 day):', {
+              commodity: commodity,
+              lastPredictedDateFromDB: lastPredictedLabel,
+              lastPredictedPrice: lastPredictedPrice,
+              today: today.toISOString().split('T')[0],
+              tomorrow: tomorrowDate.toISOString().split('T')[0],
+              generatedDates: labels.slice(-5),
+              totalPoints: labels.length,
+            });
+          } else {
+            console.log('📊 [PriceLineChart] Predicted Data Loaded:', {
+              commodity: commodity,
+              totalPoints: labels.length,
+              lastDate: labels[labels.length - 1],
+              lastPrice: dataVals[dataVals.length - 1],
+            });
+          }
+        }
+        
+        // Set hanya data terakhir untuk ditampilkan
+        setPredictedLabels(labels.slice(-1)); //data terbaru (setelah forward-fill)
+        setPredictedData(dataVals.slice(-1));
+        
+        // OPTIMASI: Mark predicted sebagai sudah di-fetch
+        fetchedCommodities.current.add(`${commodity}_pred`);
+      }
+    }).catch(err => console.warn('[PriceLineChart] Error fetching predicted data:', err));
     
     // Dependency array hanya commodity - fetch hanya sekali per commodity
   }, [commodity]);
